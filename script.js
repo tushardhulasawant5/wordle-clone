@@ -147,27 +147,31 @@ async function startGame() {
 function createKeyboard() {
   keyboardContainer.innerHTML = "";
 
-  KEYS.forEach(key => {
-    const button = document.createElement("button");
-    button.textContent = key;
-    button.className = "key";
-    button.setAttribute("data-key", key);
-    button.addEventListener("click", () => handleKey(key));
-    keyboardContainer.appendChild(button);
+  const layout = [
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["Enter", "Z", "X", "C", "V", "B", "N", "M", "Backspace"]
+  ];
+
+  layout.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("keyboard-row");
+
+    row.forEach(key => {
+      const button = document.createElement("button");
+      button.textContent = key === "Backspace" ? "⌫" : key;
+      button.className = "key";
+      button.setAttribute("data-key", key);
+      button.addEventListener("click", () => handleKey(key));
+      rowDiv.appendChild(button);
+    });
+
+    keyboardContainer.appendChild(rowDiv);
   });
-
-  const enter = document.createElement("button");
-  enter.textContent = "Enter";
-  enter.className = "key";
-  enter.addEventListener("click", () => handleKey("Enter"));
-  keyboardContainer.appendChild(enter);
-
-  const back = document.createElement("button");
-  back.textContent = "⌫";
-  back.className = "key";
-  back.addEventListener("click", () => handleKey("Backspace"));
-  keyboardContainer.appendChild(back);
 }
+
+
+
 
 window.addEventListener("load", () => {
   startGame();
