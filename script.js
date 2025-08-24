@@ -10,15 +10,9 @@ const board = document.getElementById("game-board");
 const message = document.getElementById("message");
 const restartBtn = document.getElementById("restart");
 const selectorButtons = document.querySelectorAll("#word-length-selector button");
-
 const keyboardContainer = document.getElementById("keyboard");
 
-const KEYS = [
-  ..."QWERTYUIOP",
-  ..."ASDFGHJKL",
-  ..."ZXCVBNM"
-];
-
+const KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 selectorButtons.forEach(btn => {
   btn.addEventListener("click", async () => {
@@ -38,64 +32,17 @@ function pickRandomWord(words) {
   return words[randomIndex].toUpperCase();
 }
 
-function createKeyboard() {
-  keyboardContainer.innerHTML = "";
-
-  const rows = [
-    "QWERTYUIOP",
-    "ASDFGHJKL",
-    "ZXCVBNM"
-  ];
-
-  rows.forEach((row, index) => {
-    const rowDiv = document.createElement("div");
-    rowDiv.classList.add("keyboard-row");
-
-    if (index === 2) {
-      const enter = document.createElement("button");
-      enter.textContent = "Enter";
-      enter.className = "key wide";
-      enter.addEventListener("click", () => handleKey({ key: "Enter" }));
-      rowDiv.appendChild(enter);
+function createBoard() {
+  board.innerHTML = "";
+  for (let i = 0; i < maxGuesses; i++) {
+    const row = document.createElement("div");
+    row.className = "row";
+    for (let j = 0; j < wordLength; j++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      row.appendChild(cell);
     }
-
-    row.split("").forEach(letter => {
-      const key = document.createElement("button");
-      key.textContent = letter;
-      key.className = "key";
-      key.setAttribute("data-key", letter);
-      key.addEventListener("click", () => handleKey({ key: letter }));
-      rowDiv.appendChild(key);
-    });
-
-    if (index === 2) {
-      const back = document.createElement("button");
-      back.textContent = "⌫";
-      back.className = "key wide";
-      back.addEventListener("click", () => handleKey({ key: "Backspace" }));
-      rowDiv.appendChild(back);
-    }
-
-    keyboardContainer.appendChild(rowDiv);
-  });
-}
-
-
-
-document.addEventListener("keydown", handleKey);
-
-function handleKey(e) {
-  if (gameOver) return;
-  const key = e.key.toUpperCase();
-
-  if (key === "ENTER") {
-    submitGuess();
-  } else if (key === "BACKSPACE") {
-    currentGuess = currentGuess.slice(0, -1);
-    updateRow();
-  } else if (/^[A-Z]$/.test(key) && currentGuess.length < wordLength) {
-    currentGuess += key;
-    updateRow();
+    board.appendChild(row);
   }
 }
 
@@ -103,6 +50,21 @@ function updateRow() {
   const row = board.children[currentRow];
   for (let i = 0; i < wordLength; i++) {
     row.children[i].textContent = currentGuess[i] || "";
+  }
+}
+
+function handleKey(e) {
+  if (gameOver) return;
+  const key = e.key ? e.key.toUpperCase() : e.toUpperCase();
+
+  if (key === "ENTER") {
+    submitGuess();
+  } else if (key === "BACKSPACE" || key === "⌫") {
+    currentGuess = currentGuess.slice(0, -1);
+    updateRow();
+  } else if (/^[A-Z]$/.test(key) && currentGuess.length < wordLength) {
+    currentGuess += key;
+    updateRow();
   }
 }
 
@@ -124,25 +86,23 @@ function submitGuess() {
   for (let i = 0; i < wordLength; i++) {
     const cell = row.children[i];
     const letter = guessArray[i];
+    const keyButton = document.querySelector(`.key[data-key='${letter}']`);
 
-const keyButton = document.querySelector(`.key[data-key='${letter}']`);
-
-if (letter === targetArray[i]) {
-  cell.classList.add("correct");
-  if (keyButton) keyButton.classList.remove("present", "absent"), keyButton.classList.add("correct");
-} else if (targetArray.includes(letter)) {
-  cell.classList.add("present");
-  if (keyButton && !keyButton.classList.contains("correct")) {
-    keyButton.classList.remove("absent");
-    keyButton.classList.add("present");
-  }
-} else {
-  cell.classList.add("absent");
-  if (keyButton && !keyButton.classList.contains("correct") && !keyButton.classList.contains("present")) {
-    keyButton.classList.add("absent");
-  }
-}
-
+    if (letter === targetArray[i]) {
+      cell.classList.add("correct");
+      if (keyButton) keyButton.classList.remove("present", "absent"), keyButton.classList.add("correct");
+    } else if (targetArray.includes(letter)) {
+      cell.classList.add("present");
+      if (keyButton && !keyButton.classList.contains("correct")) {
+        keyButton.classList.remove("absent");
+        keyButton.classList.add("present");
+      }
+    } else {
+      cell.classList.add("absent");
+      if (keyButton && !keyButton.classList.contains("correct") && !keyButton.classList.contains("present")) {
+        keyButton.classList.add("absent");
+      }
+    }
   }
 
   if (currentGuess === targetWord) {
@@ -159,7 +119,6 @@ if (letter === targetArray[i]) {
     endGame();
   }
 }
-
 
 function showMessage(msg) {
   message.textContent = msg;
@@ -181,27 +140,35 @@ async function startGame() {
   wordList = await loadWords(wordLength);
   targetWord = pickRandomWord(wordList);
   createBoard();
-  createKeyboard();  // ADD THIS
+  createKeyboard();
   updateRow();
 }
 
+function createKeyboard() {
+  keyboardContainer.innerHTML = "";
+
+  KEYS.forEach(key => {
+    const button = document.createElement("button");
+    button.textContent = key;
+    button.className = "key";
+    button.setAttribute("data-key", key);
+    button.addEventListener("click", () => handleKey(key));
+    keyboardContainer.appendChild(button);
+  });
+
+  const enter = document.createElement("button");
+  enter.textContent = "Enter";
+  enter.className = "key";
+  enter.addEventListener("click", () => handleKey("Enter"));
+  keyboardContainer.appendChild(enter);
+
+  const back = document.createElement("button");
+  back.textContent = "⌫";
+  back.className = "key";
+  back.addEventListener("click", () => handleKey("Backspace"));
+  keyboardContainer.appendChild(back);
+}
 
 window.addEventListener("load", () => {
   startGame();
 });
-
-
-
-function createBoard() {
-  board.innerHTML = "";
-  for (let i = 0; i < maxGuesses; i++) {
-    const row = document.createElement("div");
-    row.className = "row";
-    for (let j = 0; j < wordLength; j++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      row.appendChild(cell);
-    }
-    board.appendChild(row);
-  }
-}
